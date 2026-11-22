@@ -26,7 +26,7 @@ st.set_page_config(
 def sync_streamlit_secrets() -> None:
     """Safely exposes Streamlit Cloud secrets as environment variables."""
     try:
-        for key in ("OPENROUTER_API_KEY", "QDRANT_URL", "QDRANT_API_KEY"):
+        for key in ("OMNIROUTE_API_KEY", "OMNIROUTE_BASE_URL", "QDRANT_URL", "QDRANT_API_KEY"):
             if key in st.secrets and not os.getenv(key):
                 os.environ[key] = str(st.secrets[key]).strip()
     except Exception:

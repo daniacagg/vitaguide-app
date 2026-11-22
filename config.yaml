@@ -17,16 +17,14 @@ app:
     medical decisions or emergencies.
 
 llm:
-  mode: "openrouter_free"
-  base_url: "https://openrouter.ai/api/v1/chat/completions"
-  primary_model: "qwen/qwen3.8-27b:free"         # Apache 2.0 open-weight model ($0 free tier)
+  mode: "omniroute_self_hosted"
+  base_url: "https://ai.fuaspi.org/v1/chat/completions"
+  primary_model: "auto/best-free"                # Open-source-only OmniRoute combo name
   fallback_models:
-    - "nvidia/nemotron-3.5-lightning:free"       # Open-weight fast fallback ($0 free tier)
-    - "google/gemma-4-31b-it:free"               # Open-weight Gemma fallback ($0 free tier)
-    - "openrouter/free"                          # Automatic free open-model router fallback
+    - "auto"                                     # Automatic OmniRoute fallback alias
   temperature: 0.2                               # Low temperature to suppress factual drift
   max_new_tokens: 500
-  timeout_seconds: 40
+  timeout_seconds: 45
 
 embeddings:
   engine: "fastembed"                            # Apache 2.0 ONNX runtime (low RAM, no PyTorch)

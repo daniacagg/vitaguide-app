@@ -297,25 +297,27 @@ def build_rag_messages(
 # ------------------------------------------------------------------------------
 class OpenSourceFreeLLMClient:
     """
-    Connects to $0 open-source / open-weight models on OpenRouter's free tier
-    using standard HTTP requests (no paid APIs, no credit card required).
+    Connects to a self-hosted, MIT-licensed OmniRoute AI gateway using its
+    OpenAI-compatible /v1/chat/completions endpoint and free open-source routes.
     """
 
     def __init__(self, llm_config: Dict[str, Any]):
-        self.api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-        if not self.api_key:
-            raise EnvironmentError(
-                "Missing 'OPENROUTER_API_KEY'. Please add your free OpenRouter API key "
-                "in Streamlit Secrets (App Settings -> Secrets) or in a local .env file."
-            )
-        self.base_url = llm_config["base_url"]
+        self.api_key = os.getenv("OMNIROUTE_API_KEY", "").strip()
+        raw_url = os.getenv("OMNIROUTE_BASE_URL", llm_config["base_url"]).strip().rstrip("/")
+        if raw_url.endswith("/v1/chat/completions"):
+            self.base_url = raw_url
+        elif raw_url.endswith("/v1"):
+            self.base_url = f"{raw_url}/chat/completions"
+        else:
+            self.base_url = f"{raw_url}/v1/chat/completions"
+
         self.models = [llm_config["primary_model"]] + list(
             llm_config.get("fallback_models", [])
         )
         self.model_id = self.models[0]
         self.temperature = float(llm_config["temperature"])
         self.max_new_tokens = int(llm_config["max_new_tokens"])
-        self.timeout = int(llm_config.get("timeout_seconds", 40))
+        self.timeout = int(llm_config.get("timeout_seconds", 45))
 
     @staticmethod
     def _clean_response(text: str) -> str:
@@ -323,14 +325,11 @@ class OpenSourceFreeLLMClient:
         return cleaned.strip()
 
     def generate(self, messages: List[Dict[str, str]]) -> tuple[str, str]:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://vitaguide-health-rag.streamlit.app",
-            "X-Title": "VitaGuide Public Health RAG Assistant",
-        }
-        last_error = None
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
 
+        last_error = None
         for candidate_model in self.models:
             payload = {
                 "model": candidate_model,
@@ -363,7 +362,7 @@ class OpenSourceFreeLLMClient:
                 time.sleep(0.8)
 
         raise RuntimeError(
-            f"All free open-source LLM routes temporarily unavailable. Last error: {last_error}"
+            f"All OmniRoute free routes failed ({self.base_url}). Last error: {last_error}"
         )
 
 
