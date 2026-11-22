@@ -1,0 +1,52 @@
+# ==============================================================================
+# VitaGuide — Centralized Configuration File
+# Single source of truth for open-source models, retrieval settings, and memory.
+# Secrets (OPENROUTER_API_KEY, QDRANT_URL, QDRANT_API_KEY) must NEVER be stored
+# here; configure them in Streamlit Community Cloud Secrets or a local .env file.
+# ==============================================================================
+
+app:
+  name: "VitaGuide"
+  version: "1.1.0"
+  subtitle: "Evidence-Based Public Health Promotion Assistant (WHO/PAHO Guidelines)"
+  disclaimer: >
+    Disclaimer: VitaGuide is an educational public health assistant grounded solely
+    in publicly available WHO/PAHO guidelines. It does not provide medical diagnoses,
+    prescriptions, or clinical triage, and AI-generated summaries may contain errors
+    or omissions. Always consult a licensed healthcare professional for personal
+    medical decisions or emergencies.
+
+llm:
+  mode: "openrouter_free"
+  base_url: "https://openrouter.ai/api/v1/chat/completions"
+  primary_model: "qwen/qwen3.8-27b:free"         # Apache 2.0 open-weight model ($0 free tier)
+  fallback_models:
+    - "nvidia/nemotron-3.5-lightning:free"       # Open-weight fast fallback ($0 free tier)
+    - "google/gemma-4-31b-it:free"               # Open-weight Gemma fallback ($0 free tier)
+    - "openrouter/free"                          # Automatic free open-model router fallback
+  temperature: 0.2                               # Low temperature to suppress factual drift
+  max_new_tokens: 500
+  timeout_seconds: 40
+
+embeddings:
+  engine: "fastembed"                            # Apache 2.0 ONNX runtime (low RAM, no PyTorch)
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  vector_size: 384
+
+chunking:
+  chunk_size: 750
+  chunk_overlap: 120
+
+qdrant:
+  collection_name: "vitaguide_who_kb"
+  local_fallback_path: "./qdrant_local_db"       # Used automatically if QDRANT_URL is omitted
+  top_k: 4
+  score_threshold: 0.38                          # Cosine similarity cutoff to prevent hallucination
+
+memory:
+  max_turns: 4                                   # Rolling window of the last 4 exchanges
+  max_history_chars: 2400                        # Hard cap preventing context overflow
+
+storage:
+  sqlite_db_path: "./data/vitaguide_state.db"
+  jsonl_log_path: "./data/vitaguide_logs.jsonl"
